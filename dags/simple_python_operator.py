@@ -1,13 +1,40 @@
-import textwrap
 from datetime import datetime, timedelta
 
 # Operators; we need this to operate!
-from airflow.providers.standard.operators.bash import BashOperator
+from airflow.operators.python_operator import PythonOperator 
 
 # The DAG object; we'll need this to instantiate a DAG
 from airflow.sdk import DAG
+# from airflow.sdk import dag, task   # doing things the pythonic way
+
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+def classify():
+    data = load_iris(as_frame=True)
+
+    X = data["data"]
+    y = data["target"]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.3, random_state=42
+    )
+
+    # create logistic regression 
+    model = RandomForestClassifier(
+        n_estimators=200
+    )
+    # fit model
+    model.fit(X_train, y_train)
+
+    # evaluate fitted model
+    model.score(X_test, y_test)
+
+    # task completed
+
 with DAG(
-    "tutorial",
+    "python tutorial",
     # These args will get passed on to each operator
     # You can override them on a per-task basis during operator initialization
     default_args={
@@ -27,53 +54,22 @@ with DAG(
         # 'on_skipped_callback': another_function, #or list of functions
         # 'trigger_rule': 'all_success'
     },
-    description="A simple tutorial DAG",
+    description="A python task example DAG",
     schedule=timedelta(days=1),
     start_date=datetime(2026, 6, 5),
     catchup=False,
     tags=["example"],
 ) as dag:
 
-    # t1, t2 and t3 are examples of tasks created by instantiating operators
-    t1 = BashOperator(
-        task_id="print_date",
-        bash_command="date",
+    # t1 is an example of task
+    t1 = PythonOperator(
+        task_id='classify',
+        python_callable=classify
     )
-
-    t2 = BashOperator(
-        task_id="sleep",
-        depends_on_past=False,
-        bash_command="sleep 5",
-        retries=3,
-    )
-    t1.doc_md = textwrap.dedent(
-        """\
-    #### Task Documentation
-    You can document your task using the attributes `doc_md` (markdown),
-    `doc` (plain text), `doc_rst`, `doc_json`, `doc_yaml` which gets
-    rendered in the UI's Task Instance Details page.
-    ![img](https://imgs.xkcd.com/comics/fixing_problems.png)
-    **Image Credit:** Randall Munroe, [XKCD](https://xkcd.com/license.html)
-    """
-    )
-
+    
     dag.doc_md = __doc__  # providing that you have a docstring at the beginning of the DAG; OR
     dag.doc_md = """
     This is a documentation placed anywhere
     """  # otherwise, type it like this
-    templated_command = textwrap.dedent(
-        """
-    {% for i in range(5) %}
-        echo "{{ ds }}"
-        echo "{{ macros.ds_add(ds, 7)}}"
-    {% endfor %}
-    """
-    )
 
-    t3 = BashOperator(
-        task_id="templated",
-        depends_on_past=False,
-        bash_command=templated_command,
-    )
-
-    t1 >> [t2, t3]
+    t1
