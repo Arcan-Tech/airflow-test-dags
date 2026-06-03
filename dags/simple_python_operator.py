@@ -66,8 +66,8 @@ def example_python_flow():
         print(f"Score is: {score}")
         # task completed
     
-    data = load_data()
-    X_train, X_test, y_train, y_test = split_data(data)
+    X, y = load_data()
+    X_train, X_test, y_train, y_test = split_data(X, y)
     X_train, X_test, y_train, y_test = preprocess_data(
         X_train, X_test, y_train, y_test
     )
