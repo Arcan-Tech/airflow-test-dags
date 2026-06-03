@@ -30,7 +30,10 @@ def example_python_flow():
         return X, y
 
     @task()
-    def split_data(X:np.ndarray, y:np.ndarray) -> Tuple[np.ndarray]:
+    def split_data(
+        X:np.ndarray, 
+        y:np.ndarray
+    ) -> Tuple[np.ndarray]:
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.3, random_state=42
         )
@@ -53,7 +56,7 @@ def example_python_flow():
         X_test:np.ndarray,
         y_train:np.ndarray, 
         y_test:np.ndarray
-    ) -> float:
+    ):
         # create logistic regression 
         model = RandomForestClassifier(
             n_estimators=200
@@ -66,11 +69,11 @@ def example_python_flow():
         print(f"Score is: {score}")
         # task completed
     
-    X, y = load_data()
-    X_train, X_test, y_train, y_test = split_data(X, y)
-    X_train, X_test, y_train, y_test = preprocess_data(
-        X_train, X_test, y_train, y_test
+    data = load_data()
+    splitted_data = split_data(*data)
+    preprocessed_data = preprocess_data(
+        *splitted_data
     )
-    classify(X_train, X_test, y_train, y_test)
+    classify(*preprocessed_data)
 
 example_python_flow()
